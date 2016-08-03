@@ -1,0 +1,69 @@
+sudo: required
+dist: trusty
+language: generic
+
+matrix:
+  include:
+    - os: linux
+      env: TESTENV=py34-cov
+    - os: linux
+      env: DOCKER=debian-jessie
+      services: docker
+    - os: linux
+      env: DOCKER=archlinux
+      services: docker
+    - os: linux
+      env: DOCKER=ubuntu-xenial
+      services: docker
+    - os: osx
+      env: TESTENV=py35
+    - os: linux
+      env: TESTENV=pylint
+    - os: linux
+      env: TESTENV=flake8
+    - os: linux
+      env: TESTENV=docs
+    - os: linux
+      env: TESTENV=vulture
+    - os: linux
+      env: TESTENV=misc
+    - os: linux
+      env: TESTENV=pyroma
+    - os: linux
+      env: TESTENV=check-manifest
+    - os: linux
+      env: TESTENV=eslint
+  allow_failures:
+    - os: osx
+      env: TESTENV=py35
+
+cache:
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/build/The-Compiler/qutebrowser/.cache
+
+before_install:
+  # We need to do this so we pick up the system-wide python properly
+  - 'export PATH="/usr/bin:$PATH"'
+
+install:
+  - bash scripts/dev/ci/travis_install.sh
+
+script:
+  - bash scripts/dev/ci/travis_run.sh
+
+after_success:
+  - '[[ $TESTENV == *-cov ]] && codecov -e TESTENV -X gcov'
+
+notifications:
+  webhooks:
+    - https://buildtimetrend.herokuapp.com/travis
+  irc:
+    channels:
+      - "chat.freenode.net#qutebrowser-dev"
+    on_success: always
+    on_failure: always
+    skip_join: true
+    template:
+      - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"
+      - "%{compare_url} - %{build_url}"
